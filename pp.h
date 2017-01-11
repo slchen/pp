@@ -294,7 +294,7 @@
 
 #define PP_EQUAL(x, y) PP_COMPL(PP_NOT_EQUAL(x, y))
 
-#undef__TEST_BLOCK__
+#undef __TEST_BLOCK__
 #ifdef __TEST_BLOCK__
 
 #define test_checker(orig, expand, match) { orig, expand, match }
