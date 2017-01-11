@@ -20,8 +20,10 @@ int main()
 		++i;
 	}
 
-	if (ret == 0) printf("[passed]\n");
-	else printf("[failed]");
+	if (ret == 0)
+		printf("[passed]\n");
+	else
+		printf("[failed]\n");
 
 	return ret;
 }

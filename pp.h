@@ -279,11 +279,26 @@
 		()
 #define PP_JOIN_II() PP_JOIN_I
 
-#define __TEST_BLOCK__
+/*
+ * compare
+ * object-likc macro is comparable if only if x(a)->a
+ */
+#define PP_IS_COMPARABLE(x) PP_HAS_PAREN( x (()) )
+
+#define PP_NOT_EQUAL(x, y) \
+	PP_IF(PP_AND(PP_IS_COMPARABLE(x), PP_IS_COMPARABLE(y)), \
+	      PP_NOT_EQUAL_I, \
+	      1 PP_EAT) \
+	(x, y)
+#define PP_NOT_EQUAL_I(x, y)  PP_HAS_PAREN(x (y)(()))
+
+#define PP_EQUAL(x, y) PP_COMPL(PP_NOT_EQUAL(x, y))
+
+#undef__TEST_BLOCK__
 #ifdef __TEST_BLOCK__
 
-#define checker__(orig, expand, match) { orig, expand, match }
-#define CHECKER__(orig, match) checker__(#orig, PP_EXPR(orig), match)
+#define test_checker(orig, expand, match) { orig, expand, match }
+#define TEST_CHECKER(orig, match) test_checker(#orig, PP_EXPR(orig), match)
 
 #define TEST_RECURSE() R PP_DEFER(TEST_RECURSE_I) ()()
 #define TEST_RECURSE_I() TEST_RECURSE
@@ -294,126 +309,141 @@
 
 #define TEST_MAP2_1(x, y) x ** y
 
+#define comparable_a(x) x
+#define comparable_b(x) x
+
 struct test_info {
-       const char *orig;
+       const char *origin;
        const char *expand;
        const char *match;
 };
 
 struct test_info test__[] = {
-	CHECKER__(PP_VA_SIZE(), "1"),
-	CHECKER__(PP_VA_SIZE(a), "1"),
-	CHECKER__(PP_VA_SIZE(a, b), "2"),
-	CHECKER__(PP_VA_SIZE(a, b, c), "3"),
+	TEST_CHECKER(PP_VA_SIZE(), "1"),
+	TEST_CHECKER(PP_VA_SIZE(a), "1"),
+	TEST_CHECKER(PP_VA_SIZE(a, b), "2"),
+	TEST_CHECKER(PP_VA_SIZE(a, b, c), "3"),
 
-	CHECKER__(PP_EMPTY(), ""),
-	CHECKER__(PP_CAT(a, b), "ab"),
+	TEST_CHECKER(PP_EMPTY(), ""),
+	TEST_CHECKER(PP_CAT(a, b), "ab"),
 
-	CHECKER__(PP_FIRST(a), "a"),
-	CHECKER__(PP_FIRST(a, b), "a"),
-	CHECKER__(PP_FIRST(a, b, c), "a"),
+	TEST_CHECKER(PP_FIRST(a), "a"),
+	TEST_CHECKER(PP_FIRST(a, b), "a"),
+	TEST_CHECKER(PP_FIRST(a, b, c), "a"),
 
-	CHECKER__(PP_SECOND(a, b), "b"),
-	CHECKER__(PP_SECOND(a, b, c), "b"),
+	TEST_CHECKER(PP_SECOND(a, b), "b"),
+	TEST_CHECKER(PP_SECOND(a, b, c), "b"),
 
-	CHECKER__(PP_IS_ZERO(0), "1"),
-	CHECKER__(PP_IS_ZERO(1), "0"),
-	CHECKER__(PP_IS_ZERO(123), "0"),
-	CHECKER__(PP_IS_ZERO(abc), "0"),
+	TEST_CHECKER(PP_IS_ZERO(0), "1"),
+	TEST_CHECKER(PP_IS_ZERO(1), "0"),
+	TEST_CHECKER(PP_IS_ZERO(123), "0"),
+	TEST_CHECKER(PP_IS_ZERO(abc), "0"),
 
-	CHECKER__(PP_BOOL(0), "0"),
-	CHECKER__(PP_BOOL(1), "1"),
-	CHECKER__(PP_BOOL(123), "1"),
-	CHECKER__(PP_BOOL(abc), "1"),
+	TEST_CHECKER(PP_BOOL(0), "0"),
+	TEST_CHECKER(PP_BOOL(1), "1"),
+	TEST_CHECKER(PP_BOOL(123), "1"),
+	TEST_CHECKER(PP_BOOL(abc), "1"),
 
-	CHECKER__(PP_HAS_ARGS(), "0"),
-	CHECKER__(PP_HAS_ARGS(0), "1"),
-	CHECKER__(PP_HAS_ARGS(a, b, c), "1"),
+	TEST_CHECKER(PP_HAS_ARGS(), "0"),
+	TEST_CHECKER(PP_HAS_ARGS(0), "1"),
+	TEST_CHECKER(PP_HAS_ARGS(a, b, c), "1"),
 
-	CHECKER__(PP_AND(0,0), "0"),
-	CHECKER__(PP_AND(0,1), "0"),
-	CHECKER__(PP_AND(1,0), "0"),
-	CHECKER__(PP_AND(1,1), "1"),
+	TEST_CHECKER(PP_AND(0,0), "0"),
+	TEST_CHECKER(PP_AND(0,1), "0"),
+	TEST_CHECKER(PP_AND(1,0), "0"),
+	TEST_CHECKER(PP_AND(1,1), "1"),
 
-	CHECKER__(PP_OR(0,0), "0"),
-	CHECKER__(PP_OR(0,1), "1"),
-	CHECKER__(PP_OR(1,0), "1"),
-	CHECKER__(PP_OR(1,1), "1"),
+	TEST_CHECKER(PP_OR(0,0), "0"),
+	TEST_CHECKER(PP_OR(0,1), "1"),
+	TEST_CHECKER(PP_OR(1,0), "1"),
+	TEST_CHECKER(PP_OR(1,1), "1"),
 
-	CHECKER__(PP_NOR(0,0), "1"),
-	CHECKER__(PP_NOR(0,1), "0"),
-	CHECKER__(PP_NOR(1,0), "0"),
-	CHECKER__(PP_NOR(1,1), "0"),
+	TEST_CHECKER(PP_NOR(0,0), "1"),
+	TEST_CHECKER(PP_NOR(0,1), "0"),
+	TEST_CHECKER(PP_NOR(1,0), "0"),
+	TEST_CHECKER(PP_NOR(1,1), "0"),
 
-	CHECKER__(PP_XOR(0,0), "0"),
-	CHECKER__(PP_XOR(0,1), "1"),
-	CHECKER__(PP_XOR(1,0), "1"),
-	CHECKER__(PP_XOR(1,1), "0"),
+	TEST_CHECKER(PP_XOR(0,0), "0"),
+	TEST_CHECKER(PP_XOR(0,1), "1"),
+	TEST_CHECKER(PP_XOR(1,0), "1"),
+	TEST_CHECKER(PP_XOR(1,1), "0"),
 
-	CHECKER__(PP_COMPL(0), "1"),
-	CHECKER__(PP_COMPL(1), "0"),
-	CHECKER__(PP_COMPL(not zero), "0"),
+	TEST_CHECKER(PP_COMPL(0), "1"),
+	TEST_CHECKER(PP_COMPL(1), "0"),
+	TEST_CHECKER(PP_COMPL(not zero), "0"),
 
-	CHECKER__(PP_HAS_EMPTY(), "1"),
-	CHECKER__(PP_HAS_EMPTY(0), "0"),
-	CHECKER__(PP_HAS_EMPTY(a, b, c), "0"),
+	TEST_CHECKER(PP_HAS_EMPTY(), "1"),
+	TEST_CHECKER(PP_HAS_EMPTY(0), "0"),
+	TEST_CHECKER(PP_HAS_EMPTY(a, b, c), "0"),
 
-	CHECKER__(PP_HAS_MANY(), "0"),
-	CHECKER__(PP_HAS_MANY(a), "0"),
-	CHECKER__(PP_HAS_MANY(a, b), "1"),
+	TEST_CHECKER(PP_HAS_MANY(), "0"),
+	TEST_CHECKER(PP_HAS_MANY(a), "0"),
+	TEST_CHECKER(PP_HAS_MANY(a, b), "1"),
 
-	CHECKER__(PP_HAS_UNARY(), "0"),
-	CHECKER__(PP_HAS_UNARY(a), "1"),
-	CHECKER__(PP_HAS_UNARY(a, b), "0"),
+	TEST_CHECKER(PP_HAS_UNARY(), "0"),
+	TEST_CHECKER(PP_HAS_UNARY(a), "1"),
+	TEST_CHECKER(PP_HAS_UNARY(a, b), "0"),
 
-	CHECKER__(PP_HAS_COMMA(), "0"),
-	CHECKER__(PP_HAS_COMMA(0), "0"),
-	CHECKER__(PP_HAS_COMMA(a, b), "1"),
-	CHECKER__(PP_HAS_COMMA(, b), "1"),
-	CHECKER__(PP_HAS_COMMA(a, ), "1"),
-	CHECKER__(PP_HAS_COMMA(,), "1"),
+	TEST_CHECKER(PP_HAS_COMMA(), "0"),
+	TEST_CHECKER(PP_HAS_COMMA(0), "0"),
+	TEST_CHECKER(PP_HAS_COMMA(a, b), "1"),
+	TEST_CHECKER(PP_HAS_COMMA(, b), "1"),
+	TEST_CHECKER(PP_HAS_COMMA(a, ), "1"),
+	TEST_CHECKER(PP_HAS_COMMA(,), "1"),
 
-	CHECKER__(PP_HAS_PAREN(), "0"),
-	CHECKER__(PP_HAS_PAREN(a), "0"),
-	CHECKER__(PP_HAS_PAREN(()), "1"),
-	CHECKER__(PP_HAS_PAREN((a)), "1"),
-	CHECKER__(PP_HAS_PAREN((a, b)), "1"),
+	TEST_CHECKER(PP_HAS_PAREN(), "0"),
+	TEST_CHECKER(PP_HAS_PAREN(a), "0"),
+	TEST_CHECKER(PP_HAS_PAREN(()), "1"),
+	TEST_CHECKER(PP_HAS_PAREN((a)), "1"),
+	TEST_CHECKER(PP_HAS_PAREN((a, b)), "1"),
 
-	CHECKER__(PP_DISPATCH(0)(abc)(def), "def"),
-	CHECKER__(PP_DISPATCH(1)(abc)(def), "abc"),
-	CHECKER__(PP_DISPATCH(not zero)(abc)(def), "abc"),
+	TEST_CHECKER(PP_DISPATCH(0)(abc)(def), "def"),
+	TEST_CHECKER(PP_DISPATCH(1)(abc)(def), "abc"),
+	TEST_CHECKER(PP_DISPATCH(not zero)(abc)(def), "abc"),
 
-	CHECKER__(TEST_RECURSE(), "R R TEST_RECURSE_I ()()"),
-	CHECKER__(PP_EVAL1(TEST_RECURSE()), "R R R TEST_RECURSE_I ()()"),
-	CHECKER__(PP_EVAL2(TEST_RECURSE()), "R R R R R TEST_RECURSE_I ()()"),
+	TEST_CHECKER(TEST_RECURSE(), "R R TEST_RECURSE_I ()()"),
+	TEST_CHECKER(PP_EVAL1(TEST_RECURSE()), "R R R TEST_RECURSE_I ()()"),
+	TEST_CHECKER(PP_EVAL2(TEST_RECURSE()), "R R R R R TEST_RECURSE_I ()()"),
 
-	CHECKER__(PP_MAP(TEST_MAP1), ""),
-	CHECKER__(PP_MAP(TEST_MAP1, a), "<<a>>"),
-	CHECKER__(PP_MAP(TEST_MAP1, a, b), "<<a>> , <<b>>"),
-	CHECKER__(PP_MAP(TEST_MAP1, a, b, c), "<<a>> , <<b>> , <<c>>"),
+	TEST_CHECKER(PP_MAP(TEST_MAP1), ""),
+	TEST_CHECKER(PP_MAP(TEST_MAP1, a), "<<a>>"),
+	TEST_CHECKER(PP_MAP(TEST_MAP1, a, b), "<<a>> , <<b>>"),
+	TEST_CHECKER(PP_MAP(TEST_MAP1, a, b, c), "<<a>> , <<b>> , <<c>>"),
 
-	CHECKER__(PP_MAP2(TEST_MAP2_1), ""),
-	CHECKER__(PP_MAP2(TEST_MAP2_1, a, 1), "a ** 1"),
-	CHECKER__(PP_MAP2(TEST_MAP2_1, a, 1, b, 2), "a ** 1 , b ** 2"),
+	TEST_CHECKER(PP_MAP2(TEST_MAP2_1), ""),
+	TEST_CHECKER(PP_MAP2(TEST_MAP2_1, a, 1), "a ** 1"),
+	TEST_CHECKER(PP_MAP2(TEST_MAP2_1, a, 1, b, 2), "a ** 1 , b ** 2"),
 
-	CHECKER__(PP_JOIN(;), ""),
-	CHECKER__(PP_JOIN(;, a), "a"),
-	CHECKER__(PP_JOIN(;, a, b), "a ; b"),
-	CHECKER__(PP_JOIN(;, a, b, c), "a ; b ; c"),
+	TEST_CHECKER(PP_JOIN(;), ""),
+	TEST_CHECKER(PP_JOIN(;, a), "a"),
+	TEST_CHECKER(PP_JOIN(;, a, b), "a ; b"),
+	TEST_CHECKER(PP_JOIN(;, a, b, c), "a ; b ; c"),
 
-	CHECKER__(PP_MAP(TEST_MAP2, PP_MAP(TEST_MAP3)), ""),
-	CHECKER__(PP_MAP(TEST_MAP2, PP_MAP(TEST_MAP3, a)), "[[ a ]]"),
-	CHECKER__(PP_MAP(TEST_MAP2, PP_MAP(TEST_MAP3, a, b)),
+	TEST_CHECKER(PP_MAP(TEST_MAP2, PP_MAP(TEST_MAP3)), ""),
+	TEST_CHECKER(PP_MAP(TEST_MAP2, PP_MAP(TEST_MAP3, a)), "[[ a ]]"),
+	TEST_CHECKER(PP_MAP(TEST_MAP2, PP_MAP(TEST_MAP3, a, b)),
 	       "[[ a ]] , [[ b ]]"),
-	CHECKER__(PP_MAP(TEST_MAP2, PP_MAP(TEST_MAP3, a, b, c)),
+	TEST_CHECKER(PP_MAP(TEST_MAP2, PP_MAP(TEST_MAP3, a, b, c)),
 	       "[[ a ]] , [[ b ]] , [[ c ]]"),
 
-	CHECKER__(PP_IF(1, a, b), "a"),
-	CHECKER__(PP_IF(0, a, b), "b"),
-	CHECKER__(PP_IF(not zero, a, b), "a"),
+	TEST_CHECKER(PP_IF(1, a, b), "a"),
+	TEST_CHECKER(PP_IF(0, a, b), "b"),
+	TEST_CHECKER(PP_IF(not zero, a, b), "a"),
 
-	CHECKER__(PP_OVERLOAD(f,a)(a), "f1(a)"),
-	CHECKER__(PP_OVERLOAD(f,a,b)(a,b), "f2(a,b)"),
+	TEST_CHECKER(PP_OVERLOAD(f,a)(a), "f1(a)"),
+	TEST_CHECKER(PP_OVERLOAD(f,a,b)(a,b), "f2(a,b)"),
+
+	TEST_CHECKER(PP_NOT_EQUAL(comparable_a, comparable_b), "1"),
+	TEST_CHECKER(PP_NOT_EQUAL(comparable_a, comparable_a), "0"),
+	TEST_CHECKER(PP_NOT_EQUAL(comparable_b, comparable_b), "0"),
+	TEST_CHECKER(PP_NOT_EQUAL(comparable_a, not comparable), "1"),
+	TEST_CHECKER(PP_NOT_EQUAL(not comparable, comparable_b), "1"),
+
+	TEST_CHECKER(PP_EQUAL(comparable_a, comparable_b), "0"),
+	TEST_CHECKER(PP_EQUAL(comparable_a, comparable_a), "1"),
+	TEST_CHECKER(PP_EQUAL(comparable_b, comparable_b), "1"),
+	TEST_CHECKER(PP_EQUAL(comparable_a, not comparable), "0"),
+	TEST_CHECKER(PP_EQUAL(not comparable, comparable_b), "0"),
 
 	{0, 0, 0},
 };
