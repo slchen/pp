@@ -1,3 +1,5 @@
+[![Issues](https://img.shields.io/github/issues/slchen/pp.svg)](https://github.com/slchen/pp/issues)
+
 # pp
 simple C preprocessor  library
 
